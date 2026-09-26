@@ -30,7 +30,7 @@
             100% { background-position: 100% 100%; }
         }
 
-        /* خلفية الفيديوهات الـ 14 مع الإحلال الناعم */
+        /* خلفية الفيديوهات الـ 14 بسلاسة تامة وبدون تعليق */
         .bg-video {
             position: absolute;
             top: 0;
@@ -40,7 +40,7 @@
             object-fit: cover;
             z-index: 0;
             opacity: 0;
-            transition: opacity 4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 3s ease-in-out;
             will-change: opacity;
         }
 
@@ -257,22 +257,10 @@
     let names = ["زيد", "عمر", "علي", "سعد", "بكر", "فهد", "خالد", "صقر", "رعد", "برق", "نمر", "ليث"];
     const icons = ["🔥", "⭐", "🏆", "💎", "👑", "🚀"];
     
-    // أسماء الفيديوهات الـ 14 كاملة
     const videoFiles = [
-        "960.mp4",
-        "972 (1).mp4",
-        "972 (2).mp4",
-        "972 (3).mp4",
-        "972 (4).mp4",
-        "972 (5).mp4",
-        "972 (6).mp4",
-        "972 (7).mp4",
-        "972 (8).mp4",
-        "972 (9).mp4",
-        "972 (10).mp4",
-        "972 (11).mp4",
-        "972 (12).mp4",
-        "973.mp4"
+        "960.mp4", "972 (1).mp4", "972 (2).mp4", "972 (3).mp4", "972 (4).mp4", 
+        "972 (5).mp4", "972 (6).mp4", "972 (7).mp4", "972 (8).mp4", "972 (9).mp4", 
+        "972 (10).mp4", "972 (11).mp4", "972 (12).mp4", "973.mp4"
     ];
     
     let currentVideoIndex = -1;
@@ -293,7 +281,7 @@
     let mainInterval = null;
     let animStep = 0;
 
-    // نظام تشغيل وإحلال الفيديوهات الـ 14 مع فاصل 30 ثانية للخلفية العادية
+    // نظام تشغيل الفيديوهات الـ 14 بضمان عدم التعليق نهائياً مع فاصل 30 ثانية
     function initBackgroundVideos() {
         const container = document.getElementById('videoContainer');
         container.innerHTML = '';
@@ -319,12 +307,18 @@
         if (videoElements.length === 0) return;
         if (currentVideoIndex >= 0) {
             videoElements[currentVideoIndex].classList.remove('active');
+            videoElements[currentVideoIndex].pause(); // إيقاف مؤقت لتوفير موارد الجوال وعدم تعليقه
         }
+        
         currentVideoIndex = (currentVideoIndex + 1) % videoElements.length;
+        
         setTimeout(() => {
+            videoElements[currentVideoIndex].play().catch(() => {});
             videoElements[currentVideoIndex].classList.add('active');
+            
             setTimeout(() => {
                 videoElements[currentVideoIndex].classList.remove('active');
+                videoElements[currentVideoIndex].pause();
                 setTimeout(playNextVideoSequence, 30000); // 30 ثانية فاصل بالخلفية العادية المتموجة
             }, 15000); // عرض الفيديو لمدة 15 ثانية
         }, 1000);
@@ -374,7 +368,7 @@
         startDynamicLoop();
     }
 
-    // محرك الحركات المتطور والحر بالكامل
+    // محرك الحركات الكاملة (تراكمي: حركة المربعات الخارجية والداخلية وشعار تيك توك تعمل معاً)
     function startDynamicLoop() {
         mainInterval = setInterval(() => {
             if (lockBoard) return;
@@ -390,22 +384,22 @@
                 }
             });
 
-            animStep = (animStep + 1) % 6;
+            animStep = (animStep + 1) % 8;
 
             switch(animStep) {
                 case 0:
-                    // 1. تساقط الكرات المرن والحر تماماً خارج الشبكة وخروجها عن الأماكن
+                    // 1. تساقط الكرات المرن والحر تماماً خارج الشبكة
                     cards.forEach((card, idx) => {
                         card.style.transition = `transform 1.2s cubic-bezier(0.5, 0, 0.75, 1)`;
-                        let randX = (Math.random() - 0.5) * 250;
-                        card.style.transform = `translate3d(${randX}px, 600px, 0) rotate(${idx * 120}deg) scale(0.5)`;
+                        let randX = (Math.random() - 0.5) * 220;
+                        card.style.transform = `translate3d(${randX}px, 550px, 0) rotate(${idx * 90}deg) scale(0.5)`;
                         card.querySelector('.card-front').style.borderRadius = "50%";
                     });
                     setTimeout(() => {
                         cards.forEach((card, idx) => {
                             card.style.transition = "none";
-                            let randX2 = (Math.random() - 0.5) * 250;
-                            card.style.transform = `translate3d(${randX2}px, -600px, 0) scale(0.5)`;
+                            let randX2 = (Math.random() - 0.5) * 220;
+                            card.style.transform = `translate3d(${randX2}px, -550px, 0) scale(0.5)`;
                         });
                         setTimeout(() => {
                             cards.forEach(card => {
@@ -421,13 +415,13 @@
                     // 2. حركة الذوبان والانصهار السائل وتدفقها لأسفل الشاشة
                     cards.forEach((card) => {
                         card.style.transition = `transform 1.4s ease, opacity 1s ease`;
-                        card.style.transform = `translate3d(0, 500px, 0) scaleY(2.5) scaleX(0.35)`;
+                        card.style.transform = `translate3d(0, 480px, 0) scaleY(2.5) scaleX(0.35)`;
                         card.style.opacity = '0.1';
                     });
                     setTimeout(() => {
                         cards.forEach((card) => {
                             card.style.transition = "none";
-                            card.style.transform = `translate3d(0, -500px, 0) scaleY(2.5) scaleX(0.35)`;
+                            card.style.transform = `translate3d(0, -480px, 0) scaleY(2.5) scaleX(0.35)`;
                         });
                         setTimeout(() => {
                             cards.forEach(card => {
@@ -468,9 +462,9 @@
                         cards.forEach((card, idx) => {
                             let row = Math.floor(idx / 3);
                             let col = idx % 3;
-                            let waveOffset = Math.sin(elapsed * 6 - (row + col) * 0.7) * 45;
+                            let waveOffset = Math.sin(elapsed * 6 - (row + col) * 0.7) * 40;
                             card.style.transition = "transform 0.1s linear";
-                            card.style.transform = `translate3d(${ (col-1)*20 }px, ${waveOffset}px, ${Math.abs(waveOffset)}px) scale(${1 + waveOffset * 0.003})`;
+                            card.style.transform = `translate3d(${ (col-1)*15 }px, ${waveOffset}px, ${Math.abs(waveOffset)}px) scale(${1 + waveOffset * 0.003})`;
                         });
                         if (elapsed < 4.5) {
                             requestAnimationFrame(animateWave);
@@ -484,8 +478,8 @@
                 case 4:
                     // 5. الانفجار المجري وتوسع المربعات لأطراف الشاشة بحرية
                     cards.forEach((card, idx) => {
-                        let x = (idx % 3 - 1) * 130;
-                        let y = (Math.floor(idx / 3) - 1.5) * 130;
+                        let x = (idx % 3 - 1) * 120;
+                        let y = (Math.floor(idx / 3) - 1.5) * 120;
                         card.style.transition = "transform 1s cubic-bezier(0.34, 1.56, 0.64, 1)";
                         card.style.transform = `translate3d(${x}px, ${y}px, 60px) rotate(${ (idx%2===0?1:-1)*45 }deg) scale(0.85)`;
                     });
@@ -513,6 +507,47 @@
                                 }, 100);
                             }, 500);
                         }
+                    });
+                    break;
+
+                case 6:
+                    // 7. ظهور شعار تيك توك بانسيابية تامة
+                    contents.forEach(c => {
+                        if (!c.closest('.card-container').classList.contains('flipped') && !c.closest('.card-container').classList.contains('matched')) {
+                            c.style.transform = "scale(0) rotate(-180deg)";
+                            setTimeout(() => {
+                                c.innerHTML = `🎵<span class="tiktok-logo">TikTok</span>`;
+                                c.style.transform = "scale(1) rotate(0deg)";
+                            }, 300);
+                        }
+                    });
+                    setTimeout(() => {
+                        contents.forEach(c => {
+                            if (!c.closest('.card-container').classList.contains('flipped') && !c.closest('.card-container').classList.contains('matched')) {
+                                c.style.transform = "scale(0) rotate(180deg)";
+                                setTimeout(() => {
+                                    c.innerText = c.dataset.name;
+                                    c.style.transform = "scale(1) rotate(0deg)";
+                                }, 300);
+                            }
+                        });
+                    }, 2500);
+                    break;
+
+                case 7:
+                    // 8. حركة انزلاق الصفوف لليسار واليمين
+                    cards.forEach((card, idx) => {
+                        let row = Math.floor(idx / 3);
+                        setTimeout(() => {
+                            card.style.transition = "transform 0.5s ease";
+                            card.style.transform = "translateX(-150px)";
+                            setTimeout(() => {
+                                card.style.transform = "translateX(150px)";
+                                setTimeout(() => {
+                                    resetGridTransforms();
+                                }, 400);
+                            }, 500);
+                        }, row * 180);
                     });
                     break;
             }
