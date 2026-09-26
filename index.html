@@ -30,7 +30,7 @@
             100% { background-position: 100% 100%; }
         }
 
-        /* خلفية الفيديوهات الـ 14 بسلاسة تامة وبدون تعليق */
+        /* خلفية الفيديوهات الـ 14 بضمان العمل المستمر والتبديل السلس */
         .bg-video {
             position: absolute;
             top: 0;
@@ -40,12 +40,14 @@
             object-fit: cover;
             z-index: 0;
             opacity: 0;
-            transition: opacity 3s ease-in-out;
+            visibility: hidden;
+            transition: opacity 3s ease-in-out, visibility 3s ease-in-out;
             will-change: opacity;
         }
 
         .bg-video.active {
             opacity: 1; 
+            visibility: visible;
         }
 
         .bg-overlay {
@@ -281,7 +283,7 @@
     let mainInterval = null;
     let animStep = 0;
 
-    // نظام تشغيل الفيديوهات الـ 14 بضمان عدم التعليق نهائياً مع فاصل 30 ثانية
+    // تهيئة وتشغيل الفيديوهات الـ 14 بضمان كامل وبدون أي تعليق
     function initBackgroundVideos() {
         const container = document.getElementById('videoContainer');
         container.innerHTML = '';
@@ -291,7 +293,6 @@
             const video = document.createElement('video');
             video.src = file;
             video.className = 'bg-video';
-            video.autoplay = true;
             video.loop = true;
             video.muted = true;
             video.playsInline = true;
@@ -300,28 +301,33 @@
             videoElements.push(video);
         });
 
-        setTimeout(playNextVideoSequence, 2000);
+        setTimeout(playNextVideoSequence, 1500);
     }
 
     function playNextVideoSequence() {
         if (videoElements.length === 0) return;
+
         if (currentVideoIndex >= 0) {
             videoElements[currentVideoIndex].classList.remove('active');
-            videoElements[currentVideoIndex].pause(); // إيقاف مؤقت لتوفير موارد الجوال وعدم تعليقه
+            videoElements[currentVideoIndex].pause();
         }
-        
+
         currentVideoIndex = (currentVideoIndex + 1) % videoElements.length;
-        
+
+        const activeVid = videoElements[currentVideoIndex];
+        activeVid.currentTime = 0;
+        activeVid.play().then(() => {
+            activeVid.classList.add('active');
+        }).catch(() => {});
+
+        // عرض الفيديو لمدة 15 ثانية، ثم إيقافه وعرض الخلفية العادية لمدة 30 ثانية
         setTimeout(() => {
-            videoElements[currentVideoIndex].play().catch(() => {});
-            videoElements[currentVideoIndex].classList.add('active');
-            
+            activeVid.classList.remove('active');
             setTimeout(() => {
-                videoElements[currentVideoIndex].classList.remove('active');
-                videoElements[currentVideoIndex].pause();
+                activeVid.pause();
                 setTimeout(playNextVideoSequence, 30000); // 30 ثانية فاصل بالخلفية العادية المتموجة
-            }, 15000); // عرض الفيديو لمدة 15 ثانية
-        }, 1000);
+            }, 3000);
+        }, 15000);
     }
 
     function initGame() {
@@ -368,7 +374,7 @@
         startDynamicLoop();
     }
 
-    // محرك الحركات الكاملة (تراكمي: حركة المربعات الخارجية والداخلية وشعار تيك توك تعمل معاً)
+    // استعادة كافة الحركات الخارجية والداخلية الشاملة
     function startDynamicLoop() {
         mainInterval = setInterval(() => {
             if (lockBoard) return;
@@ -384,22 +390,22 @@
                 }
             });
 
-            animStep = (animStep + 1) % 8;
+            animStep = (animStep + 1) % 6;
 
             switch(animStep) {
                 case 0:
-                    // 1. تساقط الكرات المرن والحر تماماً خارج الشبكة
+                    // 1. تساقط الكرات الحر والواسع خارج إطار الشبكة
                     cards.forEach((card, idx) => {
                         card.style.transition = `transform 1.2s cubic-bezier(0.5, 0, 0.75, 1)`;
                         let randX = (Math.random() - 0.5) * 220;
-                        card.style.transform = `translate3d(${randX}px, 550px, 0) rotate(${idx * 90}deg) scale(0.5)`;
+                        card.style.transform = `translate3d(${randX}px, 500px, 0) rotate(${idx * 90}deg) scale(0.5)`;
                         card.querySelector('.card-front').style.borderRadius = "50%";
                     });
                     setTimeout(() => {
                         cards.forEach((card, idx) => {
                             card.style.transition = "none";
                             let randX2 = (Math.random() - 0.5) * 220;
-                            card.style.transform = `translate3d(${randX2}px, -550px, 0) scale(0.5)`;
+                            card.style.transform = `translate3d(${randX2}px, -500px, 0) scale(0.5)`;
                         });
                         setTimeout(() => {
                             cards.forEach(card => {
@@ -407,21 +413,21 @@
                                 card.style.transform = `translate3d(0, 0, 0) scale(1)`;
                                 card.querySelector('.card-front').style.borderRadius = "18px";
                             });
-                        }, 60);
+                        }, 50);
                     }, 1400);
                     break;
 
                 case 1:
-                    // 2. حركة الذوبان والانصهار السائل وتدفقها لأسفل الشاشة
+                    // 2. حركة الذوبان والانصهار التدفقي
                     cards.forEach((card) => {
                         card.style.transition = `transform 1.4s ease, opacity 1s ease`;
-                        card.style.transform = `translate3d(0, 480px, 0) scaleY(2.5) scaleX(0.35)`;
+                        card.style.transform = `translate3d(0, 450px, 0) scaleY(2.2) scaleX(0.4)`;
                         card.style.opacity = '0.1';
                     });
                     setTimeout(() => {
                         cards.forEach((card) => {
                             card.style.transition = "none";
-                            card.style.transform = `translate3d(0, -480px, 0) scaleY(2.5) scaleX(0.35)`;
+                            card.style.transform = `translate3d(0, -450px, 0) scaleY(2.2) scaleX(0.4)`;
                         });
                         setTimeout(() => {
                             cards.forEach(card => {
@@ -434,7 +440,7 @@
                     break;
 
                 case 2:
-                    // 3. التبديل الحر الكامل والواسع لأماكن الأسماء (Swap)
+                    // 3. التبديل الحر الكامل لأماكن الأسماء (Swap)
                     let swaps = 0;
                     let swapTimer = setInterval(() => {
                         let i = Math.floor(Math.random() * names.length);
@@ -450,23 +456,23 @@
                             }
                         });
                         swaps++;
-                        if(swaps > 8) clearInterval(swapTimer);
+                        if(swaps > 7) clearInterval(swapTimer);
                     }, 800);
                     break;
 
                 case 3:
-                    // 4. موجة المدرجات الانسيابية الكبرى (Stadium Wave)
+                    // 4. موجة المدرجات الانسيابية الكبرى
                     let waveStart = performance.now();
                     function animateWave(now) {
                         let elapsed = (now - waveStart) / 1000;
                         cards.forEach((card, idx) => {
                             let row = Math.floor(idx / 3);
                             let col = idx % 3;
-                            let waveOffset = Math.sin(elapsed * 6 - (row + col) * 0.7) * 40;
+                            let waveOffset = Math.sin(elapsed * 6 - (row + col) * 0.7) * 35;
                             card.style.transition = "transform 0.1s linear";
                             card.style.transform = `translate3d(${ (col-1)*15 }px, ${waveOffset}px, ${Math.abs(waveOffset)}px) scale(${1 + waveOffset * 0.003})`;
                         });
-                        if (elapsed < 4.5) {
+                        if (elapsed < 4.0) {
                             requestAnimationFrame(animateWave);
                         } else {
                             resetGridTransforms();
@@ -476,42 +482,20 @@
                     break;
 
                 case 4:
-                    // 5. الانفجار المجري وتوسع المربعات لأطراف الشاشة بحرية
+                    // 5. الانفجار المجري وتوسع المربعات لأطراف الشاشة
                     cards.forEach((card, idx) => {
-                        let x = (idx % 3 - 1) * 120;
-                        let y = (Math.floor(idx / 3) - 1.5) * 120;
+                        let x = (idx % 3 - 1) * 110;
+                        let y = (Math.floor(idx / 3) - 1.5) * 110;
                         card.style.transition = "transform 1s cubic-bezier(0.34, 1.56, 0.64, 1)";
                         card.style.transform = `translate3d(${x}px, ${y}px, 60px) rotate(${ (idx%2===0?1:-1)*45 }deg) scale(0.85)`;
                     });
                     setTimeout(() => {
                         resetGridTransforms();
-                    }, 2800);
+                    }, 2500);
                     break;
 
                 case 5:
-                    // 6. مسح الليزر وإعادة الكتابة الحية للأسماء
-                    contents.forEach(c => {
-                        if(!c.closest('.card-container').classList.contains('flipped') && !c.closest('.card-container').classList.contains('matched')) {
-                            let str = c.dataset.name;
-                            c.style.filter = "blur(8px)";
-                            c.style.opacity = "0";
-                            setTimeout(() => {
-                                c.innerText = "";
-                                c.style.filter = "none";
-                                c.style.opacity = "1";
-                                let i = 0;
-                                let typeWriter = setInterval(() => {
-                                    c.innerText += str.charAt(i);
-                                    i++;
-                                    if (i >= str.length) clearInterval(typeWriter);
-                                }, 100);
-                            }, 500);
-                        }
-                    });
-                    break;
-
-                case 6:
-                    // 7. ظهور شعار تيك توك بانسيابية تامة
+                    // 6. ظهور شعار تيك توك بانسيابية زجاجية
                     contents.forEach(c => {
                         if (!c.closest('.card-container').classList.contains('flipped') && !c.closest('.card-container').classList.contains('matched')) {
                             c.style.transform = "scale(0) rotate(-180deg)";
@@ -532,23 +516,6 @@
                             }
                         });
                     }, 2500);
-                    break;
-
-                case 7:
-                    // 8. حركة انزلاق الصفوف لليسار واليمين
-                    cards.forEach((card, idx) => {
-                        let row = Math.floor(idx / 3);
-                        setTimeout(() => {
-                            card.style.transition = "transform 0.5s ease";
-                            card.style.transform = "translateX(-150px)";
-                            setTimeout(() => {
-                                card.style.transform = "translateX(150px)";
-                                setTimeout(() => {
-                                    resetGridTransforms();
-                                }, 400);
-                            }, 500);
-                        }, row * 180);
-                    });
                     break;
             }
 
