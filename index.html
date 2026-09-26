@@ -330,7 +330,7 @@
         startDynamicLoop();
     }
 
-    // دوام الحركات الحرّة والمنفصلة عن القيود
+    // دوام الحركات الحرّة والمبتكرة مع الإضافات الجديدة
     function startDynamicLoop() {
         mainInterval = setInterval(() => {
             if (lockBoard) return;
@@ -346,18 +346,17 @@
                 }
             });
 
-            animationIndex = (animationIndex + 1) % 6;
+            animationIndex = (animationIndex + 1) % 9;
 
             switch(animationIndex) {
                 case 0:
-                    // 1. حركة تحول المربعات إلى كرات وتساقطها للأسفل ثم العودة من الأعلى بحرية
+                    // 1. حركة الكرات والتساقط الحر للأسفل ومن ثم العودة من الأعلى
                     cards.forEach((card, idx) => {
                         card.style.transition = "transform 1.2s cubic-bezier(0.5, 0, 0.5, 1), border-radius 0.8s ease";
                         card.style.transform = `translateY(600px) rotate(${idx * 90}deg) scale(0.6)`;
                         card.querySelector('.card-front').style.borderRadius = "50%";
                     });
                     setTimeout(() => {
-                        // هبوط فوري من أعلى الشاشة لأماكنهم
                         cards.forEach((card, idx) => {
                             card.style.transition = "none";
                             card.style.transform = `translateY(-600px) rotate(0deg)`;
@@ -394,7 +393,67 @@
                     break;
 
                 case 2:
-                    // 3. حركة المحاية (تمحى الأسماء وتعود تُكتب تدريجياً بطريقة بصرية حية)
+                    // 3. حركة الذوبان والانصهار (التدفق كالسائل لأسفل ثم العودة من الأعلى)
+                    cards.forEach((card, idx) => {
+                        card.style.transition = "transform 1.5s ease";
+                        card.style.transform = `translateY(550px) scaleY(2) scaleX(0.5)`;
+                        card.style.opacity = "0.2";
+                    });
+                    setTimeout(() => {
+                        cards.forEach((card, idx) => {
+                            card.style.transition = "none";
+                            card.style.transform = `translateY(-550px) scaleY(2) scaleX(0.5)`;
+                        });
+                        setTimeout(() => {
+                            cards.forEach(card => {
+                                card.style.transition = "transform 1.2s ease, opacity 1s ease";
+                                card.style.transform = 'translate(0px, 0px) scale(1)';
+                                card.style.opacity = "1";
+                            });
+                        }, 50);
+                    }, 1600);
+                    break;
+
+                case 3:
+                    // 4. حركة موجة المدرجات (Stadium Wave) تنتقل من الصف الأعلى للأسفل لمدة 5 ثوانٍ
+                    let waveCount = 0;
+                    let waveInterval = setInterval(() => {
+                        cards.forEach((card, idx) => {
+                            let row = Math.floor(idx / 3);
+                            // تفاعل موجي تتابعي حسب الصف
+                            let offset = Math.sin((waveCount + row) * 0.8) * 35;
+                            card.style.transition = "transform 0.3s ease";
+                            card.style.transform = `translateY(${offset}px) scale(${1 + offset * 0.003})`;
+                        });
+                        waveCount++;
+                        if(waveCount > 15) {
+                            clearInterval(waveInterval);
+                            resetGridTransforms();
+                        }
+                    }, 300);
+                    break;
+
+                case 4:
+                    // 5. حركة التبادل المستمر بين صفوف المربعات لمدة 5 ثوانٍ (مربع علوي ينزل للأسفل وسفلي يصعد للأعلى)
+                    let continuousSwapCount = 0;
+                    let continuousSwapInterval = setInterval(() => {
+                        cards.forEach((card, idx) => {
+                            let targetIdx = (idx + 3) % cards.length; // تبديل بين صفوف عمودية
+                            let xShift = (Math.random() - 0.5) * 40;
+                            let yShift = (Math.random() - 0.5) * 40;
+                            card.style.transition = "transform 0.5s ease";
+                            card.style.transform = `translate(${xShift}px, ${yShift}px) scale(0.92)`;
+                        });
+                        continuousSwapCount++;
+                        if(continuousSwapCount > 10) {
+                            clearInterval(continuousSwapInterval);
+                            resetGridTransforms();
+                        }
+                    }, 500);
+                    break;
+
+                case 5:
+                    // 6. حركة المحاية (تمحى الأسماء وتعود تُكتب تدريجياً)
                     contents.forEach(c => {
                         if(!c.closest('.card-container').classList.contains('flipped') && !c.closest('.card-container').classList.contains('matched')) {
                             let originalText = c.dataset.name;
@@ -416,8 +475,8 @@
                     });
                     break;
 
-                case 3:
-                    // 4. حركة التفتح والانفجار الحر للأطراف ثم التجمع
+                case 6:
+                    // 7. حركة التفتح والانفجار الحر للأطراف ثم التجمع
                     cards.forEach((card, idx) => {
                         let xDir = (idx % 3 - 1) * 90;
                         let yDir = (Math.floor(idx / 3) - 1.5) * 90;
@@ -429,8 +488,8 @@
                     }, 2500);
                     break;
 
-                case 4:
-                    // 5. حركة موجة الانزلاق الطولي للصفوف
+                case 7:
+                    // 8. حركة موجة الانزلاق الطولي للصفوف
                     cards.forEach((card, idx) => {
                         let row = Math.floor(idx / 3);
                         setTimeout(() => {
@@ -446,8 +505,8 @@
                     });
                     break;
 
-                case 5:
-                    // 6. تشكيل أشكال هندسية متطورة حرة ومتحركة
+                case 8:
+                    // 9. تشكيل أشكال هندسية متطورة حرة ومتحركة
                     const shapes = [
                         [{x:0, y:-40}, {x:0, y:-20}, {x:0, y:0}, {x:-40, y:-20}, {x:40, y:-20}, {x:-30, y:-40}, {x:30, y:-40}, {x:-30, y:0}, {x:30, y:0}, {x:-50, y:-60}, {x:50, y:-60}, {x:0, y:-80}],
                         [{x:-40, y:-40}, {x:-40, y:-20}, {x:-40, y:0}, {x:-40, y:20}, {x:-40, y:40}, {x:0, y:40}, {x:40, y:40}, {x:20, y:0}, {x:-20, y:0}, {x:20, y:-20}, {x:-20, y:-20}, {x:0, y:-40}]
@@ -496,9 +555,7 @@
     window.addEventListener('mousemove', resetToNormal);
     window.addEventListener('touchstart', resetToNormal);
 
-    function resetToNormal() {
-        // إبقاء الحركة حرة وتلقائية وعدم كبحها باللمس البسيط
-    }
+    function resetToNormal() {}
 
     function flipCard(cardContainer, icon) {
         if (lockBoard) return;
