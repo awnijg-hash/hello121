@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة التطابق - تيك توك</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e1b4b, #31103f);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .bg-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 5s ease-in-out;
+        }
+
+        .bg-video.active {
+            opacity: 1; 
+        }
+
+        .bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.35);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 360px;
+            position: relative;
+            z-index: 3;
+            transition: all 1s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        
+        .grid.celebrate-shake {
+            animation: screenShake 0.5s ease-in-out;
+        }
+
+        @keyframes screenShake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-10px, 10px) rotate(-2deg); }
+            40% { transform: translate(10px, -10px) rotate(2deg); }
+            60% { transform: translate(-10px, -10px) rotate(-1deg); }
+            80% { transform: translate(10px, 10px) rotate(1deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        .card-container {
+            aspect-ratio: 1;
+            perspective: 1000px;
+            cursor: pointer;
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 4;
+        }
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            border-radius: 14px;
+        }
+        .card-container.flipped .card {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            user-select: none;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #25f4ee, #fe2c55);
+            color: #fff;
+            font-size: 1.4rem;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: background 1s ease, border-radius 0.6s ease, transform 0.6s ease;
+        }
+
+        .front-content {
+            transition: all 0.5s ease-in-out;
+            opacity: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-back {
+            background: #ffffff;
+            color: #000;
+            font-size: 2.5rem;
+            transform: rotateY(180deg);
+        }
+
+        .tiktok-logo {
+            font-size: 1.4rem;
+            font-weight: 900;
+            text-shadow: 2px 2px 0px #00f2fe, -2px -2px 0px #fe2c55;
+            letter-spacing: 1px;
+        }
+
+        .card-container.matched .card-back {
+            animation: matchSuccessGlow 1s ease infinite alternate;
+        }
+
+        @keyframes matchSuccessGlow {
+            0% { box-shadow: 0 0 10px #25f4ee, inset 0 0 10px #25f4ee; background: #e0f7fa; }
+            100% { box-shadow: 0 0 30px #fe2c55, inset 0 0 20px #fe2c55; background: #ffebee; }
+        }
+
+        .firework {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #fe2c55, 0 0 40px #25f4ee, 0 0 60px #f7ff00;
+            animation: explode 1.2s ease-out forwards;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(45); opacity: 0; }
+        }
+
+        .controls {
+            margin-top: 20px;
+            z-index: 5;
+        }
+        button {
+            background-color: #fe2c55;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(254, 44, 85, 0.4);
+            transition: transform 0.2s;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+<div id="videoContainer"></div>
+<div class="bg-overlay"></div>
+
+<div class="container">
+    <div class="grid" id="gameGrid"></div>
+    <div class="controls">
+        <button onclick="resetGame()">إعادة اللعبة</button>
+    </div>
+</div>
+
+<script>
+    let names = ["زيد", "عمر", "علي", "سعد", "بكر", "فهد", "خالد", "صقر", "رعد", "برق", "نمر", "ليث"];
+    const icons = ["🔥", "⭐", "🏆", "💎", "👑", "🚀"];
+    
+    const videoFiles = [
+        "960.mp4", "972 (1).mp4", "972 (2).mp4", "972 (3).mp4", "972 (4).mp4", 
+        "972 (5).mp4", "972 (6).mp4", "972 (7).mp4", "972 (8).mp4", "972 (9).mp4", 
+        "972 (10).mp4", "972 (11).mp4", "972 (12).mp4", "973.mp4"
+    ];
+    
+    let currentVideoIndex = -1;
+    let videoElements = [];
+
+    const colorGradients = [
+        "linear-gradient(135deg, #25f4ee, #fe2c55)",
+        "linear-gradient(135deg, #ff0050, #00f2fe)",
+        "linear-gradient(135deg, #7928ca, #ff0080)",
+        "linear-gradient(135deg, #ffb199, #ff0844)",
+        "linear-gradient(135deg, #00c6ff, #0072ff)",
+        "linear-gradient(135deg, #f7ff00, #db36a4)",
+        "linear-gradient(135deg, #00ff87, #60efff)",
+        "linear-gradient(135deg, #ff0844, #ffb199)"
+    ];
+
+    let flippedCards = [];
+    let lockBoard = false;
+    let mainInterval = null;
+    let animationIndex = 0;
+
+    function initBackgroundVideos() {
+        const container = document.getElementById('videoContainer');
+        container.innerHTML = '';
+        videoElements = [];
+
+        videoFiles.forEach((file) => {
+            const video = document.createElement('video');
+            video.src = file;
+            video.className = 'bg-video';
+            video.autoplay = true;
+            video.loop = true;
+            video.muted = true;
+            video.playsInline = true;
+            video.playbackRate = 0.5;
+            container.appendChild(video);
+            videoElements.push(video);
+        });
+
+        setTimeout(playNextVideoSequence, 2000);
+    }
+
+    function playNextVideoSequence() {
+        if (videoElements.length === 0) return;
+        if (currentVideoIndex >= 0) {
+            videoElements[currentVideoIndex].classList.remove('active');
+        }
+        currentVideoIndex = (currentVideoIndex + 1) % videoElements.length;
+        setTimeout(() => {
+            videoElements[currentVideoIndex].classList.add('active');
+            setTimeout(() => {
+                videoElements[currentVideoIndex].classList.remove('active');
+                setTimeout(playNextVideoSequence, 30000); 
+            }, 15000);
+        }, 1000);
+    }
+
+    function initGame() {
+        if (mainInterval) clearInterval(mainInterval);
+
+        let cardItems = [...icons, ...icons];
+        cardItems.sort(() => Math.random() - 0.5);
+
+        const grid = document.getElementById('gameGrid');
+        grid.innerHTML = '';
+        flippedCards = [];
+        lockBoard = false;
+        resetGridTransforms();
+
+        cardItems.forEach((icon, index) => {
+            const cardContainer = document.createElement('div');
+            cardContainer.classList.add('card-container');
+
+            const card = document.createElement('div');
+            card.classList.add('card');
+
+            const frontFace = document.createElement('div');
+            frontFace.classList.add('card-face', 'card-front');
+            
+            const frontContent = document.createElement('div');
+            frontContent.classList.add('front-content');
+            frontContent.innerText = names[index];
+            frontContent.dataset.name = names[index];
+
+            frontFace.appendChild(frontContent);
+
+            const backFace = document.createElement('div');
+            backFace.classList.add('card-face', 'card-back');
+            backFace.innerText = icon;
+
+            card.appendChild(frontFace);
+            card.appendChild(backFace);
+            cardContainer.appendChild(card);
+
+            cardContainer.addEventListener('click', () => flipCard(cardContainer, icon));
+            grid.appendChild(cardContainer);
+        });
+
+        startDynamicLoop();
+    }
+
+    // دوام الحركات الحرّة والمنفصلة عن القيود
+    function startDynamicLoop() {
+        mainInterval = setInterval(() => {
+            if (lockBoard) return;
+
+            const fronts = document.querySelectorAll('.card-front');
+            const contents = document.querySelectorAll('.front-content');
+            const cards = document.querySelectorAll('.card-container');
+
+            const unifiedColor = colorGradients[Math.floor(Math.random() * colorGradients.length)];
+            fronts.forEach(front => {
+                if (!front.closest('.card-container').classList.contains('flipped') && !front.closest('.card-container').classList.contains('matched')) {
+                    front.style.background = unifiedColor;
+                }
+            });
+
+            animationIndex = (animationIndex + 1) % 6;
+
+            switch(animationIndex) {
+                case 0:
+                    // 1. حركة تحول المربعات إلى كرات وتساقطها للأسفل ثم العودة من الأعلى بحرية
+                    cards.forEach((card, idx) => {
+                        card.style.transition = "transform 1.2s cubic-bezier(0.5, 0, 0.5, 1), border-radius 0.8s ease";
+                        card.style.transform = `translateY(600px) rotate(${idx * 90}deg) scale(0.6)`;
+                        card.querySelector('.card-front').style.borderRadius = "50%";
+                    });
+                    setTimeout(() => {
+                        // هبوط فوري من أعلى الشاشة لأماكنهم
+                        cards.forEach((card, idx) => {
+                            card.style.transition = "none";
+                            card.style.transform = `translateY(-600px) rotate(0deg)`;
+                        });
+                        setTimeout(() => {
+                            cards.forEach(card => {
+                                card.style.transition = "transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+                                card.style.transform = 'translate(0px, 0px) scale(1)';
+                                card.querySelector('.card-front').style.borderRadius = "14px";
+                            });
+                        }, 50);
+                    }, 1300);
+                    break;
+
+                case 1:
+                    // 2. حركة التبديل الحر والطليق لأماكن الأسماء (Swap عشوائي طوال 10 ثوانٍ)
+                    let swapCount = 0;
+                    let swapInterval = setInterval(() => {
+                        let i = Math.floor(Math.random() * names.length);
+                        let j = Math.floor(Math.random() * names.length);
+                        let temp = names[i];
+                        names[i] = names[j];
+                        names[j] = temp;
+
+                        contents.forEach((c, idx) => {
+                            if (!c.closest('.card-container').classList.contains('flipped') && !c.closest('.card-container').classList.contains('matched')) {
+                                c.innerText = names[idx];
+                                c.dataset.name = names[idx];
+                            }
+                        });
+                        swapCount++;
+                        if(swapCount > 8) clearInterval(swapInterval);
+                    }, 1000);
+                    break;
+
+                case 2:
+                    // 3. حركة المحاية (تمحى الأسماء وتعود تُكتب تدريجياً بطريقة بصرية حية)
+                    contents.forEach(c => {
+                        if(!c.closest('.card-container').classList.contains('flipped') && !c.closest('.card-container').classList.contains('matched')) {
+                            let originalText = c.dataset.name;
+                            let i = originalText.length;
+                            let eraseInterval = setInterval(() => {
+                                c.innerText = originalText.substring(0, i);
+                                i--;
+                                if(i < 0) {
+                                    clearInterval(eraseInterval);
+                                    let j = 0;
+                                    let writeInterval = setInterval(() => {
+                                        c.innerText = originalText.substring(0, j);
+                                        j++;
+                                        if(j > originalText.length) clearInterval(writeInterval);
+                                    }, 100);
+                                }
+                            }, 70);
+                        }
+                    });
+                    break;
+
+                case 3:
+                    // 4. حركة التفتح والانفجار الحر للأطراف ثم التجمع
+                    cards.forEach((card, idx) => {
+                        let xDir = (idx % 3 - 1) * 90;
+                        let yDir = (Math.floor(idx / 3) - 1.5) * 90;
+                        card.style.transition = "transform 0.8s ease";
+                        card.style.transform = `translate(${xDir}px, ${yDir}px) scale(0.8) rotate(45deg)`;
+                    });
+                    setTimeout(() => {
+                        resetGridTransforms();
+                    }, 2500);
+                    break;
+
+                case 4:
+                    // 5. حركة موجة الانزلاق الطولي للصفوف
+                    cards.forEach((card, idx) => {
+                        let row = Math.floor(idx / 3);
+                        setTimeout(() => {
+                            card.style.transition = "transform 0.5s ease";
+                            card.style.transform = "translateX(-180px)";
+                            setTimeout(() => {
+                                card.style.transform = "translateX(180px)";
+                                setTimeout(() => {
+                                    resetGridTransforms();
+                                }, 400);
+                            }, 500);
+                        }, row * 200);
+                    });
+                    break;
+
+                case 5:
+                    // 6. تشكيل أشكال هندسية متطورة حرة ومتحركة
+                    const shapes = [
+                        [{x:0, y:-40}, {x:0, y:-20}, {x:0, y:0}, {x:-40, y:-20}, {x:40, y:-20}, {x:-30, y:-40}, {x:30, y:-40}, {x:-30, y:0}, {x:30, y:0}, {x:-50, y:-60}, {x:50, y:-60}, {x:0, y:-80}],
+                        [{x:-40, y:-40}, {x:-40, y:-20}, {x:-40, y:0}, {x:-40, y:20}, {x:-40, y:40}, {x:0, y:40}, {x:40, y:40}, {x:20, y:0}, {x:-20, y:0}, {x:20, y:-20}, {x:-20, y:-20}, {x:0, y:-40}]
+                    ];
+                    let chosenShape = shapes[Math.floor(Math.random() * shapes.length)];
+                    cards.forEach((card, idx) => {
+                        card.style.transition = "transform 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+                        if(chosenShape[idx]) {
+                            card.style.transform = `translate(${chosenShape[idx].x}px, ${chosenShape[idx].y}px) scale(0.85) rotate(15deg)`;
+                        }
+                    });
+                    setTimeout(() => {
+                        resetGridTransforms();
+                    }, 3000);
+                    break;
+            }
+
+        }, 7000);
+    }
+
+    function resetGridTransforms() {
+        const cards = document.querySelectorAll('.card-container');
+        cards.forEach(card => {
+            card.style.transition = "transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+            card.style.transform = 'translate(0px, 0px) scale(1) rotate(0deg)';
+        });
+    }
+
+    function triggerMassiveCelebration() {
+        const grid = document.getElementById('gameGrid');
+        grid.classList.add('celebrate-shake');
+        setTimeout(() => grid.classList.remove('celebrate-shake'), 500);
+
+        for (let i = 0; i < 15; i++) {
+            setTimeout(() => {
+                const fw = document.createElement('div');
+                fw.classList.add('firework');
+                fw.style.left = Math.random() * window.innerWidth + 'px';
+                fw.style.top = Math.random() * window.innerHeight + 'px';
+                document.body.appendChild(fw);
+                setTimeout(() => fw.remove(), 1200);
+            }, i * 80);
+        }
+    }
+
+    window.addEventListener('mousemove', resetToNormal);
+    window.addEventListener('touchstart', resetToNormal);
+
+    function resetToNormal() {
+        // إبقاء الحركة حرة وتلقائية وعدم كبحها باللمس البسيط
+    }
+
+    function flipCard(cardContainer, icon) {
+        if (lockBoard) return;
+        if (cardContainer.classList.contains('flipped') || cardContainer.classList.contains('matched')) return;
+
+        cardContainer.classList.add('flipped');
+        flippedCards.push({ cardContainer, icon });
+
+        if (flippedCards.length === 2) {
+            checkForMatch();
+        }
+    }
+
+    function checkForMatch() {
+        const [item1, item2] = flippedCards;
+        const isMatch = item1.icon === item2.icon;
+
+        if (isMatch) {
+            item1.cardContainer.classList.add('matched');
+            item2.cardContainer.classList.add('matched');
+            flippedCards = [];
+            triggerMassiveCelebration();
+        } else {
+            lockBoard = true;
+            setTimeout(() => {
+                item1.cardContainer.classList.remove('flipped');
+                item2.cardContainer.classList.remove('flipped');
+                flippedCards = [];
+                lockBoard = false;
+            }, 1200);
+        }
+    }
+
+    function resetGame() {
+        initGame();
+    }
+
+    initBackgroundVideos();
+    initGame();
+</script>
+
+</body>
+</html>
