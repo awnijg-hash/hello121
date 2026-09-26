@@ -31,6 +31,7 @@
             100% { background-position: 0% 50%; }
         }
 
+        /* تعديل الفيديوهات لتعمل بسلاسة تامة وبدون تعليق أو تداخل */
         .bg-video {
             position: absolute;
             top: 0;
@@ -40,11 +41,13 @@
             object-fit: cover;
             z-index: 0;
             opacity: 0;
-            transition: opacity 5s ease-in-out;
+            visibility: hidden;
+            transition: opacity 5s ease-in-out, visibility 5s ease-in-out;
         }
 
         .bg-video.active {
             opacity: 1; 
+            visibility: visible;
         }
 
         .bg-overlay {
@@ -250,6 +253,7 @@
     let mainInterval = null;
     let animationIndex = 0;
 
+    // نظام تحكم بالفيديوهات يمنع التعليق ويعرضها بالدور مع الخلفية العادية الفاصلة
     function initBackgroundVideos() {
         const container = document.getElementById('videoContainer');
         container.innerHTML = '';
@@ -259,7 +263,6 @@
             const video = document.createElement('video');
             video.src = file;
             video.className = 'bg-video';
-            video.autoplay = true;
             video.loop = true;
             video.muted = true;
             video.playsInline = true;
@@ -268,22 +271,33 @@
             videoElements.push(video);
         });
 
-        setTimeout(playNextVideoSequence, 2000);
+        setTimeout(playNextVideoSequence, 1500);
     }
 
     function playNextVideoSequence() {
         if (videoElements.length === 0) return;
+        
         if (currentVideoIndex >= 0) {
             videoElements[currentVideoIndex].classList.remove('active');
+            videoElements[currentVideoIndex].pause();
         }
+
         currentVideoIndex = (currentVideoIndex + 1) % videoElements.length;
+
+        const activeVideo = videoElements[currentVideoIndex];
+        activeVideo.currentTime = 0;
+        activeVideo.play().then(() => {
+            activeVideo.classList.add('active');
+        }).catch(() => {});
+
+        // تشغيل الفيديو 15 ثانية، ثم إيقافه لتعود الخلفية العادية المتموجة لمدة 30 ثانية فاصلة
         setTimeout(() => {
-            videoElements[currentVideoIndex].classList.add('active');
+            activeVideo.classList.remove('active');
             setTimeout(() => {
-                videoElements[currentVideoIndex].classList.remove('active');
+                activeVideo.pause();
                 setTimeout(playNextVideoSequence, 30000); 
-            }, 15000);
-        }, 1000);
+            }, 3000);
+        }, 15000);
     }
 
     function initGame() {
@@ -330,7 +344,7 @@
         startDynamicLoop();
     }
 
-    // دوام الحركات الحرّة والمبتكرة مع الإضافات الجديدة
+    // دوام الحركات الحرّة والمبتكرة كاملة بدون حذف أي حركة
     function startDynamicLoop() {
         mainInterval = setInterval(() => {
             if (lockBoard) return;
@@ -372,7 +386,7 @@
                     break;
 
                 case 1:
-                    // 2. حركة التبديل الحر والطليق لأماكن الأسماء (Swap عشوائي طوال 10 ثوانٍ)
+                    // 2. حركة التبديل الحر والطليق لأماكن الأسماء (Swap عشوائي طوال الوقت)
                     let swapCount = 0;
                     let swapInterval = setInterval(() => {
                         let i = Math.floor(Math.random() * names.length);
@@ -415,12 +429,11 @@
                     break;
 
                 case 3:
-                    // 4. حركة موجة المدرجات (Stadium Wave) تنتقل من الصف الأعلى للأسفل لمدة 5 ثوانٍ
+                    // 4. حركة موجة المدرجات (Stadium Wave) تنتقل من الصف الأعلى للأسفل
                     let waveCount = 0;
                     let waveInterval = setInterval(() => {
                         cards.forEach((card, idx) => {
                             let row = Math.floor(idx / 3);
-                            // تفاعل موجي تتابعي حسب الصف
                             let offset = Math.sin((waveCount + row) * 0.8) * 35;
                             card.style.transition = "transform 0.3s ease";
                             card.style.transform = `translateY(${offset}px) scale(${1 + offset * 0.003})`;
@@ -434,11 +447,10 @@
                     break;
 
                 case 4:
-                    // 5. حركة التبادل المستمر بين صفوف المربعات لمدة 5 ثوانٍ (مربع علوي ينزل للأسفل وسفلي يصعد للأعلى)
+                    // 5. حركة التبادل المستمر بين صفوف المربعات
                     let continuousSwapCount = 0;
                     let continuousSwapInterval = setInterval(() => {
                         cards.forEach((card, idx) => {
-                            let targetIdx = (idx + 3) % cards.length; // تبديل بين صفوف عمودية
                             let xShift = (Math.random() - 0.5) * 40;
                             let yShift = (Math.random() - 0.5) * 40;
                             card.style.transition = "transform 0.5s ease";
