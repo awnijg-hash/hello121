@@ -31,7 +31,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* تعديل الفيديوهات لتعمل بسلاسة تامة وبدون تعليق أو تداخل */
         .bg-video {
             position: absolute;
             top: 0;
@@ -252,8 +251,11 @@
     let lockBoard = false;
     let mainInterval = null;
     let animationIndex = 0;
+    
+    // متغيرات لتتبع تفاعل اللاعب وتثبيت المربعات فوراً
+    let isUserInteracting = false;
+    let interactionTimeout = null;
 
-    // نظام تحكم بالفيديوهات يمنع التعليق ويعرضها بالدور مع الخلفية العادية الفاصلة
     function initBackgroundVideos() {
         const container = document.getElementById('videoContainer');
         container.innerHTML = '';
@@ -290,7 +292,6 @@
             activeVideo.classList.add('active');
         }).catch(() => {});
 
-        // تشغيل الفيديو 15 ثانية، ثم إيقافه لتعود الخلفية العادية المتموجة لمدة 30 ثانية فاصلة
         setTimeout(() => {
             activeVideo.classList.remove('active');
             setTimeout(() => {
@@ -337,14 +338,36 @@
             card.appendChild(backFace);
             cardContainer.appendChild(card);
 
-            cardContainer.addEventListener('click', () => flipCard(cardContainer, icon));
+            cardContainer.addEventListener('click', () => {
+                triggerUserInteraction();
+                flipCard(cardContainer, icon);
+            });
             grid.appendChild(cardContainer);
         });
 
         startDynamicLoop();
     }
 
-    // دوام الحركات الحرّة والمبتكرة كاملة بدون حذف أي حركة
+    // رصد حركة الماوس أو اللمس لتثبيت المربعات فوراً ومنع حركتها أثناء اللعب
+    window.addEventListener('mousemove', () => {
+        triggerUserInteraction();
+    });
+    window.addEventListener('touchstart', () => {
+        triggerUserInteraction();
+    });
+
+    function triggerUserInteraction() {
+        isUserInteracting = true;
+        resetGridTransforms(); // إعادة المربعات لمكانها الثابت فوراً
+
+        if (interactionTimeout) clearTimeout(interactionTimeout);
+        
+        // بعد توقف اللاعب عن الحركة لمدة 4 ثوانٍ، تعود الحركات التلقائية تدريجياً
+        interactionTimeout = setTimeout(() => {
+            isUserInteracting = false;
+        }, 4000);
+    }
+
     function startDynamicLoop() {
         mainInterval = setInterval(() => {
             if (lockBoard) return;
@@ -353,6 +376,7 @@
             const contents = document.querySelectorAll('.front-content');
             const cards = document.querySelectorAll('.card-container');
 
+            // تغيير الألوان بسلاسة بغض النظر عن الحركة
             const unifiedColor = colorGradients[Math.floor(Math.random() * colorGradients.length)];
             fronts.forEach(front => {
                 if (!front.closest('.card-container').classList.contains('flipped') && !front.closest('.card-container').classList.contains('matched')) {
@@ -360,22 +384,26 @@
                 }
             });
 
+            // إذا كان اللاعب يحاول النقر أو يحرّك الماوس، نتجاوز الحركات لتثبيت المربعات
+            if (isUserInteracting) return;
+
             animationIndex = (animationIndex + 1) % 9;
 
             switch(animationIndex) {
                 case 0:
-                    // 1. حركة الكرات والتساقط الحر للأسفل ومن ثم العودة من الأعلى
                     cards.forEach((card, idx) => {
                         card.style.transition = "transform 1.2s cubic-bezier(0.5, 0, 0.5, 1), border-radius 0.8s ease";
                         card.style.transform = `translateY(600px) rotate(${idx * 90}deg) scale(0.6)`;
                         card.querySelector('.card-front').style.borderRadius = "50%";
                     });
                     setTimeout(() => {
+                        if (isUserInteracting) return;
                         cards.forEach((card, idx) => {
                             card.style.transition = "none";
                             card.style.transform = `translateY(-600px) rotate(0deg)`;
                         });
                         setTimeout(() => {
+                            if (isUserInteracting) return;
                             cards.forEach(card => {
                                 card.style.transition = "transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
                                 card.style.transform = 'translate(0px, 0px) scale(1)';
@@ -386,9 +414,9 @@
                     break;
 
                 case 1:
-                    // 2. حركة التبديل الحر والطليق لأماكن الأسماء (Swap عشوائي طوال الوقت)
                     let swapCount = 0;
                     let swapInterval = setInterval(() => {
+                        if (isUserInteracting) { clearInterval(swapInterval); return; }
                         let i = Math.floor(Math.random() * names.length);
                         let j = Math.floor(Math.random() * names.length);
                         let temp = names[i];
@@ -407,18 +435,19 @@
                     break;
 
                 case 2:
-                    // 3. حركة الذوبان والانصهار (التدفق كالسائل لأسفل ثم العودة من الأعلى)
                     cards.forEach((card, idx) => {
                         card.style.transition = "transform 1.5s ease";
                         card.style.transform = `translateY(550px) scaleY(2) scaleX(0.5)`;
                         card.style.opacity = "0.2";
                     });
                     setTimeout(() => {
+                        if (isUserInteracting) return;
                         cards.forEach((card, idx) => {
                             card.style.transition = "none";
                             card.style.transform = `translateY(-550px) scaleY(2) scaleX(0.5)`;
                         });
                         setTimeout(() => {
+                            if (isUserInteracting) return;
                             cards.forEach(card => {
                                 card.style.transition = "transform 1.2s ease, opacity 1s ease";
                                 card.style.transform = 'translate(0px, 0px) scale(1)';
@@ -429,9 +458,9 @@
                     break;
 
                 case 3:
-                    // 4. حركة موجة المدرجات (Stadium Wave) تنتقل من الصف الأعلى للأسفل
                     let waveCount = 0;
                     let waveInterval = setInterval(() => {
+                        if (isUserInteracting) { clearInterval(waveInterval); resetGridTransforms(); return; }
                         cards.forEach((card, idx) => {
                             let row = Math.floor(idx / 3);
                             let offset = Math.sin((waveCount + row) * 0.8) * 35;
@@ -447,9 +476,9 @@
                     break;
 
                 case 4:
-                    // 5. حركة التبادل المستمر بين صفوف المربعات
                     let continuousSwapCount = 0;
                     let continuousSwapInterval = setInterval(() => {
+                        if (isUserInteracting) { clearInterval(continuousSwapInterval); resetGridTransforms(); return; }
                         cards.forEach((card, idx) => {
                             let xShift = (Math.random() - 0.5) * 40;
                             let yShift = (Math.random() - 0.5) * 40;
@@ -465,18 +494,19 @@
                     break;
 
                 case 5:
-                    // 6. حركة المحاية (تمحى الأسماء وتعود تُكتب تدريجياً)
                     contents.forEach(c => {
                         if(!c.closest('.card-container').classList.contains('flipped') && !c.closest('.card-container').classList.contains('matched')) {
                             let originalText = c.dataset.name;
                             let i = originalText.length;
                             let eraseInterval = setInterval(() => {
+                                if (isUserInteracting) { clearInterval(eraseInterval); c.innerText = originalText; return; }
                                 c.innerText = originalText.substring(0, i);
                                 i--;
                                 if(i < 0) {
                                     clearInterval(eraseInterval);
                                     let j = 0;
                                     let writeInterval = setInterval(() => {
+                                        if (isUserInteracting) { clearInterval(writeInterval); c.innerText = originalText; return; }
                                         c.innerText = originalText.substring(0, j);
                                         j++;
                                         if(j > originalText.length) clearInterval(writeInterval);
@@ -488,7 +518,6 @@
                     break;
 
                 case 6:
-                    // 7. حركة التفتح والانفجار الحر للأطراف ثم التجمع
                     cards.forEach((card, idx) => {
                         let xDir = (idx % 3 - 1) * 90;
                         let yDir = (Math.floor(idx / 3) - 1.5) * 90;
@@ -501,13 +530,14 @@
                     break;
 
                 case 7:
-                    // 8. حركة موجة الانزلاق الطولي للصفوف
                     cards.forEach((card, idx) => {
                         let row = Math.floor(idx / 3);
                         setTimeout(() => {
+                            if (isUserInteracting) return;
                             card.style.transition = "transform 0.5s ease";
                             card.style.transform = "translateX(-180px)";
                             setTimeout(() => {
+                                if (isUserInteracting) return;
                                 card.style.transform = "translateX(180px)";
                                 setTimeout(() => {
                                     resetGridTransforms();
@@ -518,7 +548,6 @@
                     break;
 
                 case 8:
-                    // 9. تشكيل أشكال هندسية متطورة حرة ومتحركة
                     const shapes = [
                         [{x:0, y:-40}, {x:0, y:-20}, {x:0, y:0}, {x:-40, y:-20}, {x:40, y:-20}, {x:-30, y:-40}, {x:30, y:-40}, {x:-30, y:0}, {x:30, y:0}, {x:-50, y:-60}, {x:50, y:-60}, {x:0, y:-80}],
                         [{x:-40, y:-40}, {x:-40, y:-20}, {x:-40, y:0}, {x:-40, y:20}, {x:-40, y:40}, {x:0, y:40}, {x:40, y:40}, {x:20, y:0}, {x:-20, y:0}, {x:20, y:-20}, {x:-20, y:-20}, {x:0, y:-40}]
@@ -544,6 +573,7 @@
         cards.forEach(card => {
             card.style.transition = "transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
             card.style.transform = 'translate(0px, 0px) scale(1) rotate(0deg)';
+            card.querySelector('.card-front').style.borderRadius = "14px";
         });
     }
 
@@ -563,11 +593,6 @@
             }, i * 80);
         }
     }
-
-    window.addEventListener('mousemove', resetToNormal);
-    window.addEventListener('touchstart', resetToNormal);
-
-    function resetToNormal() {}
 
     function flipCard(cardContainer, icon) {
         if (lockBoard) return;
